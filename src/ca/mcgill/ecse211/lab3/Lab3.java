@@ -1,3 +1,8 @@
+package ca.mcgill.ecse211.lab3;
+
+import ca.mcgill.ecse211.odometer.Odometer;
+import ca.mcgill.ecse211.odometer.OdometerDisplay;
+import ca.mcgill.ecse211.odometer.OdometerExceptions;
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.LCD;
@@ -37,14 +42,14 @@ public class Lab3 {
 	  return (int) (sampleColor[0] * 100.0);
   }
    
-  public static void main(String[] args) {
+  public static void main(String[] args) throws OdometerExceptions {
 
     int buttonChoice;
     
     // Odometer related objects
     Odometer odometer = new Odometer(leftMotor, rightMotor, WHEEL_BASE, WHEEL_RAD);
     OdometerDisplay odometryDisplay = new OdometerDisplay(lcd);
-    Navigation navigator = new Navigation(odometer);
+    //Navigation navigator = new Navigation(odometer);
     //Avoidance avoid = new Avoid(usSensor, odometer, navigator);
         
     do {
@@ -63,14 +68,10 @@ public class Lab3 {
 
     if (buttonChoice == Button.ID_LEFT) {
     	
-    		odometer.start();
-    		odometryDisplay.start();
-    		navigator.start();
-    		
-    		navigator.travelTo(2, 1);
-    		navigator.travelTo(1, 1);
-    		navigator.travelTo(1, 2);
-    		navigator.travelTo(2, 0);
+//    		Thread odoThread = new Thread(odometer);
+//	    odoThread.start();
+//	    Thread odoDisplayThread = new Thread(odometryDisplay);
+//	    odoDisplayThread.start();
       
 
       // Display changes in position as wheels are (manually) moved
@@ -81,47 +82,13 @@ public class Lab3 {
 //      odoDisplayThread.start();
 
     } else {
-    		LCD.clear();
-    		
-    		//start the avoid thread
-    		//avoid.start();
-    		//start the odometer thread
-    		odometer.start();
-    		//start the odometer display thread
-    		odometryDisplay.start();
-    	
-
-      // clear the display
-//      lcd.clear();
-//
-//      // ask the user whether odometery correction should be run or not
-//      lcd.drawString("< Left | Right >", 0, 0);
-//      lcd.drawString("  No   | with   ", 0, 1);
-//      lcd.drawString(" corr- | corr-  ", 0, 2);
-//      lcd.drawString(" ection| ection ", 0, 3);
-//      lcd.drawString("       |        ", 0, 4);
-//
-//      buttonChoice = Button.waitForAnyPress(); // Record choice (left or right press)
-//
-//      // Start odometer and display threads
-//      Thread odoThread = new Thread(odometer);
-//      odoThread.start();
-//      Thread odoDisplayThread = new Thread(odometryDisplay);
-//      odoDisplayThread.start();
-//      
-//      // spawn a new Thread to avoid SquareDriver.drive() from blocking
-//      (new Thread() {
-//        public void run() {
-//          SquareDriver.drive(leftMotor, rightMotor, WHEEL_RAD, WHEEL_RAD, TRACK);
-//        }
-//      }).start();
-      
-//      // Start correction if right button was pressed
-//      if (buttonChoice == Button.ID_RIGHT) {
-//        Thread odoCorrectionThread = new Thread(odometryCorrection);
-//        odoCorrectionThread.start();
-//        
-//      }
+//    		(new Thread() {
+//  	     public void run() {
+//  	        navigator.travelTo();
+//  	     }
+//  	    }).start();
+//    		usPoller = new UltrasonicPoller(usDistance, usData);
+//    		usPoller.start();
 
 
     }
@@ -132,3 +99,4 @@ public class Lab3 {
   
 
 }
+

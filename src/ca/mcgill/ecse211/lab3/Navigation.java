@@ -1,3 +1,6 @@
+package ca.mcgill.ecse211.lab3;
+
+import ca.mcgill.ecse211.odometer.*;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 
 public class Navigation extends Thread{
@@ -19,8 +22,10 @@ public class Navigation extends Thread{
 	//private boolean isMoving;
 	private boolean isNavigating;
 	
-	public Navigation(Odometer odo) {
+	public Navigation(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, Odometer odo) {
 		this.odometer = odo;
+		this.leftMotor = leftMotor;
+		this.rightMotor = rightMotor;
 		isNavigating = false;
 	}
 	
@@ -41,18 +46,22 @@ public class Navigation extends Thread{
 			//need to convert theta from degrees to radians
 			theta = odometer.getXYT()[2] * 180/Math.PI;
 			x = odometer.getXYT()[0];
-			y = odometer.getXYT()[1];	
+			y = odometer.getXYT()[1];
+			
 		}
 		
-		//First, calculate degrees you need to turn from 0 degrees:
+		this.deltaX = navX - x;
+		this.deltaY = navY - y;
+		
+		//Now, calculate degrees you need to turn from 0 degrees:
 		//Math.atan2(y, x) gives angle b/ween x-axis and the vector between (0,0) and (x, y) --> assume (0, 0) is current (x, y) of odometer
 		deltaT = Math.atan2(navY - y, navX - x) *180/Math.PI;
 		
-		//Now, calculate the actual angle of change
+		//Calculate the actual angle of change
 		thetaHead = deltaT - theta;
 		
 		//Distance it should travel in this direction
-		distance = Math.sqrt(Math.pow(navX - x, 2) + Math.pow(navY - y, 2));
+		distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaX, 2));
 		
 		turnTo(thetaHead);
 		
@@ -88,8 +97,6 @@ public class Navigation extends Thread{
 		else if (thetaHead > 180) {
 			thetaHead = thetaHead - 360;
 		}
-		else
-			turnTo(thetaHead);
 		
 		leftMotor.setSpeed(ROTATE_SPEED);
 		rightMotor.setSpeed(ROTATE_SPEED);
@@ -128,3 +135,4 @@ public class Navigation extends Thread{
 		return convertDistance(radius, (Math.PI*width*angle/360.0));
 	}
 }
+
