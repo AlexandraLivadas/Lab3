@@ -1,130 +1,167 @@
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+
+import lejos.hardware.Button;
+import lejos.hardware.Sound;
+import lejos.hardware.ev3.LocalEV3;
+import lejos.hardware.lcd.TextLCD;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import odometer.Odometer;
 
 public class Navigation extends Thread{
-	
+
 	private EV3LargeRegulatedMotor leftMotor;
 	private EV3LargeRegulatedMotor rightMotor;
 	private static final int FORWARD_SPEED = 250;
 	private static final int ROTATE_SPEED = 150;
+
+
 	private final double WHEEL_RAD = 2.2;
 	private final double WHEEL_BASE = 10.0;
+	private final double TILE_SIZE;
+
+
 	private Odometer odometer;
-	private double deltaX;
-	private double deltaY;
-	private double deltaT;
 	private double x, y, theta;
-	private double thetaHead;
-	private double distance;
-	//private boolean isTurning;
-	//private boolean isMoving;
+
+	private ArrayList<double[]> _coordsList;
+
 	private boolean isNavigating;
-	
-	public Navigation(Odometer odo) {
+
+	public Navigation(Odometer odo, EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, double tileSize) {
+
 		this.odometer = odo;
-		isNavigating = false;
+		this.leftMotor = leftMotor;
+		this.rightMotor = rightMotor;
+		this.TILE_SIZE = tileSize;
+		this.isNavigating = false;
+		this._coordsList = new ArrayList<double[]>();
 	}
-	
-//	public void run() {
-//
-//		
-//	}
-		
-/**
- * Has the robot move to a given position
- * 
- * @param navX coordinate of position
- * @param navY coordinate of position
- */
+
+	/**
+	 * Has the robot move to a given position
+	 * 
+	 * @param navX coordinate of position
+	 * @param navY coordinate of position
+	 */
 	void travelTo(double navX, double navY) {
-		//synchronize to avoid collision
+		this._coordsList.add(new double[] {navX*TILE_SIZE, navY*TILE_SIZE});
+	}
+
+	public void run() {
+		while (!this._coordsList.isEmpty()) {
+			double[] coords = this._coordsList.remove(0);
+			this._travelTo(coords[0], coords[1]);
+		}
+	}
+
+	//	public void run() {
+	//
+	//		
+	//	}
+
+	boolean _travelTo(double navX, double navY) {
+		// get current coordinates
 		synchronized(odometer.lock) {
 			//need to convert theta from degrees to radians
-			theta = odometer.getXYT()[2] * 180/Math.PI;
+			theta = odometer.getXYT()[2];
 			x = odometer.getXYT()[0];
 			y = odometer.getXYT()[1];	
 		}
-		
-		//First, calculate degrees you need to turn from 0 degrees:
-		//Math.atan2(y, x) gives angle b/ween x-axis and the vector between (0,0) and (x, y) --> assume (0, 0) is current (x, y) of odometer
-		deltaT = Math.atan2(navY - y, navX - x) *180/Math.PI;
-		
-		//Now, calculate the actual angle of change
-		thetaHead = deltaT - theta;
-		
-		//Distance it should travel in this direction
-		distance = Math.sqrt(Math.pow(navX - x, 2) + Math.pow(navY - y, 2));
-		
-		turnTo(thetaHead);
-		
+		// find angle to turn to
+		double deltaX = navX - x;
+		double deltaY = navY - y;
+
+		// get absolute values of deltas
+		double absDeltaX = Math.abs(deltaX);
+		double absDeltaY = Math.abs(deltaY);
+
+		double deltaTheta = Math.atan2(deltaX, deltaY) / Math.PI * 180;
+
+		// turn to the correct direction
+
+		this._turnTo(theta, deltaTheta);
+		Sound.beep();
+		// move until destination is reached
+		// while loop is used in case of collision override
+
 		leftMotor.setSpeed(FORWARD_SPEED);
 		rightMotor.setSpeed(FORWARD_SPEED);
 		leftMotor.forward();
 		rightMotor.forward();
-		
-		isNavigating = true;
-		
-		leftMotor.rotate(convertDistance(WHEEL_RAD, distance), true);
-		rightMotor.rotate(convertDistance(WHEEL_RAD, distance), false);
-		
-		isNavigating = false;
-		}
-	
 
+		while(true) {
+			double newTheta, newX, newY;
+			synchronized(odometer.lock) {
+				//need to convert theta from degrees to radians
+				newTheta = odometer.getXYT()[2];
+				newX = odometer.getXYT()[0];
+				newY = odometer.getXYT()[1];	
+			}
+			
+			
+			if (Math.abs(newX - x) > absDeltaX && Math.abs(newY - y) > absDeltaY) {
+				break;
+			}
 
-//	This method causes the robot to turn (on point) to the absolute heading theta. This method
-//	should turn a MINIMAL angle to its target.
-/**
- * Turns the robot to the absolute (minima) heading theta
- * 
- * @param thetaHead to turn robot by
- */
-	void turnTo(double thetaHead) {
-		theta = odometer.getXYT()[2] * 180/Math.PI;
-		
-		//Find minimal angle to turn
-		if (thetaHead <= -180) {
-			thetaHead = thetaHead + 360;
+			// no need to sleep since it synchronizes with the odometer lock
 		}
-		else if (thetaHead > 180) {
-			thetaHead = thetaHead - 360;
-		}
-		else
-			turnTo(thetaHead);
-		
+		leftMotor.stop(true);
+		rightMotor.stop(false);
+		this.isNavigating = false;
+		Sound.twoBeeps();
+		return true;
+	}
+
+	//	This method causes the robot to turn (on point) to the absolute heading theta. This method
+	//	should turn a MINIMAL angle to its target.
+	/**
+	 * Turns the robot to the absolute (minima) heading theta
+	 * 
+	 * @param currTheta current theta
+	 * @param destTheta to turn robot by
+	 */
+	void _turnTo(double currTheta, double destTheta) {
+		// get theta difference
+		double deltaTheta = destTheta - currTheta;
+		// normalize theta
+		deltaTheta = normalizeAngle(deltaTheta);
+
 		leftMotor.setSpeed(ROTATE_SPEED);
 		rightMotor.setSpeed(ROTATE_SPEED);
-		
-		leftMotor.rotate(convertAngle(WHEEL_RAD, WHEEL_BASE, thetaHead), true);
-		rightMotor.rotate(-convertAngle(WHEEL_RAD, WHEEL_BASE, thetaHead), false);
-		
-		isNavigating = false;
+
+		leftMotor.rotate(convertAngle(WHEEL_RAD, WHEEL_BASE, deltaTheta), true);
+		rightMotor.rotate(-convertAngle(WHEEL_RAD, WHEEL_BASE, deltaTheta), false);
 	}
-	
+
+	double normalizeAngle(double theta) {
+		if (theta <= -180) {
+			theta += 360;
+		}
+		else if (theta > 180) {
+			theta -= 360;
+		}
+		return theta;
+	}
+
+
 	boolean isNavigating() {
 		return isNavigating;
 	}
-	
-/**
- * Moves robot a certain distance
- * 
- * @param radius of wheels
- * @param distance 
- * 
- * @return degrees needed to turn in order to move forward that distance
- */
+
+	/**
+	 * This method allows the conversion of a distance to the total rotation of each wheel need to
+	 * cover that distance.
+	 * 
+	 * @param radius
+	 * @param distance
+	 * @return
+	 */
 	private static int convertDistance(double radius, double distance) {
-		return (int)((180.0 *distance)/(Math.PI * distance));
+		return (int) ((180.0 * distance) / (Math.PI * radius));
 	}
 
-/**
- * Return degrees to turn robot
- * 
- * @param radius of wheels
- * @param width of wheel base
- * @param angle to turn
- * @return degrees to turn the robot to turn the proper angle amount
- */
 	private static int convertAngle(double radius, double width, double angle) {
-		return convertDistance(radius, (Math.PI*width*angle/360.0));
+		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
 }

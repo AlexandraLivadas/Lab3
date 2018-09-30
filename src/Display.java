@@ -1,10 +1,12 @@
 import java.text.DecimalFormat;
 import lejos.hardware.lcd.TextLCD;
+import odometer.Odometer;
+import odometer.OdometerExceptions;
 
 /**
  * This class is used to display the content of the odometer variables (x, y, Theta)
  */
-public class OdometerDisplay extends Thread implements Runnable {
+public class Display extends Thread implements Runnable {
 
   private Odometer odo;
   private TextLCD lcd;
@@ -18,7 +20,7 @@ public class OdometerDisplay extends Thread implements Runnable {
    * @param odoData
    * @throws OdometerExceptions 
    */
-  public OdometerDisplay(TextLCD lcd) {
+  public Display(TextLCD lcd) throws OdometerExceptions {
     odo = Odometer.getOdometer();
     this.lcd = lcd;
   }
@@ -29,7 +31,7 @@ public class OdometerDisplay extends Thread implements Runnable {
    * @param odoData
    * @throws OdometerExceptions 
    */
-  public OdometerDisplay(TextLCD lcd, long timeout) {
+  public Display(TextLCD lcd, long timeout) throws OdometerExceptions {
     odo = Odometer.getOdometer();
     this.timeout = timeout;
     this.lcd = lcd;
