@@ -120,7 +120,7 @@ public class Navigation extends Thread{
  * @return degrees needed to turn in order to move forward that distance
  */
 	private static int convertDistance(double radius, double distance) {
-		return (int)((180.0 *distance)/(Math.PI * distance));
+		return (int)((180.0 *distance)/(Math.PI * radius));
 	}
 
 /**

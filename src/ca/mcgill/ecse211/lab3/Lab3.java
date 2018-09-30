@@ -34,7 +34,12 @@ public class Lab3 {
   
   public static final SensorModes usSensor = new EV3UltrasonicSensor(usPort); 
   public static final SampleProvider usDistance = usSensor.getMode("Distance"); 
-  public static final float[] usData = new float[usDistance.sampleSize()]; 
+  public static final float[] usData = new float[usDistance.sampleSize()];
+  
+  protected static final double TILE_SIZE = 30.48; 
+  public static int currentPoint;
+  public static int[] xValues = {0, 1, 2, 2, 1};
+  public static int[] yValues = {2, 1, 2, 1, 0};
   
   
   public static int getLightSensor() {
@@ -70,22 +75,39 @@ public class Lab3 {
     		odoThread.start();
     		Thread odoDisplayThread = new Thread(odometryDisplay);
     		odoDisplayThread.start();
-
+    		
+        	currentPoint = 0; 
+    	
     if (buttonChoice == Button.ID_LEFT) {
     		
     		//Navigation with no obstacles
     	  (new Thread() {
-    	      private Object TRACK;
-
 			public void run() {
-    	        Driver.start(odometer, leftMotor, rightMotor, WHEEL_RAD, WHEEL_BASE, false);
+    	        //Driver.start(odometer, leftMotor, rightMotor, WHEEL_RAD, WHEEL_BASE, false);
+			Navigation navigator = new Navigation(leftMotor, rightMotor, odometer);
+				//Loop through all points using the currentPoint value
+			while(currentPoint<5) {
+					//We need to make sure it isn't already navigating somewhere
+				if(!navigator.isNavigating()) {
+					navigator.travelTo(xValues[currentPoint]*TILE_SIZE, yValues[currentPoint]*TILE_SIZE);
+					currentPoint++;
+					}
+				}
     	      }
     	    }).start();
 
     } else {
     		(new Thread() {
     			public void run() {
-    				Driver.start(odometer, leftMotor, rightMotor, WHEEL_RAD, WHEEL_BASE, true);
+    				//Driver.start(odometer, leftMotor, rightMotor, WHEEL_RAD, WHEEL_BASE, true);
+    				Avoidance avoid = new Avoidance(leftMotor, rightMotor, odometer);
+    				while(currentPoint<5) {
+    					//We need to make sure it isn't already navigating somewhere
+    					if(!avoid.isNavigating()) {
+    						avoid.travelTo(xValues[currentPoint]*TILE_SIZE, yValues[currentPoint]*TILE_SIZE);
+    						currentPoint++;
+    					}
+    				}
     			}
   	    }).start();
     		usPoller = new UltrasonicPoller(usDistance, usData);

@@ -8,7 +8,7 @@ public class Avoidance implements UltrasonicController{
 	private static final int FORWARD_SPEED = 250;
 	private int ROTATE_SPEED = 150;
 	private static final double WHEEL_RAD = 2.2;
-	private double TRACK = 10.0;
+	private double WHEEL_BASE = 10.0;
 	private Odometer odometer;
 	private EV3LargeRegulatedMotor leftMotor;
 	private EV3LargeRegulatedMotor rightMotor;
@@ -78,13 +78,28 @@ public class Avoidance implements UltrasonicController{
 
 
 	private void turnTo(double thetaHead) {
-		// TODO Auto-generated method stub
+		theta = odometer.getXYT()[2] * 180/Math.PI;
+		
+		//Find minimal angle to turn
+		if (thetaHead <= -180) {
+			thetaHead = thetaHead + 360;
+		}
+		else if (thetaHead > 180) {
+			thetaHead = thetaHead - 360;
+		}
+		
+		leftMotor.setSpeed(ROTATE_SPEED);
+		rightMotor.setSpeed(ROTATE_SPEED);
+		
+		leftMotor.rotate(convertAngle(WHEEL_RAD, WHEEL_BASE, thetaHead), true);
+		rightMotor.rotate(-convertAngle(WHEEL_RAD, WHEEL_BASE, thetaHead), false);
+		
+		isNavigating = false;
 		
 	}
 	
 	public boolean isNavigating() {
-		// TODO Auto-generated method stub
-		return false;
+		return isNavigating();
 	}
 	
 	
@@ -97,7 +112,7 @@ public class Avoidance implements UltrasonicController{
 	 * @return degrees needed to turn in order to move forward that distance
 	 */
 	private static int convertDistance(double radius, double distance) {
-		return (int)((180.0 *distance)/(Math.PI * distance));
+		return (int)((180.0 *distance)/(Math.PI * radius));
 	}
 
 	/**
@@ -122,8 +137,8 @@ public class Avoidance implements UltrasonicController{
 			
 			leftMotor.setSpeed(ROTATE_SPEED);
 			rightMotor.setSpeed(ROTATE_SPEED);
-			leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), true);
-			rightMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), false);
+			leftMotor.rotate(convertAngle(WHEEL_RAD, WHEEL_BASE, 90), true);
+			rightMotor.rotate(-convertAngle(WHEEL_RAD, WHEEL_BASE, 90), false);
 			
 			leftMotor.setSpeed(FORWARD_SPEED);
 			rightMotor.setSpeed(FORWARD_SPEED);
@@ -132,8 +147,8 @@ public class Avoidance implements UltrasonicController{
 			
 			leftMotor.setSpeed(ROTATE_SPEED);
 			rightMotor.setSpeed(ROTATE_SPEED);
-			leftMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, 90), true);
-			rightMotor.rotate(convertAngle(WHEEL_RAD, TRACK, 90), false);
+			leftMotor.rotate(-convertAngle(WHEEL_RAD, WHEEL_BASE, 90), true);
+			rightMotor.rotate(convertAngle(WHEEL_RAD, WHEEL_BASE, 90), false);
 		}
 	}
 
