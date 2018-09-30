@@ -47,10 +47,9 @@ public class Lab3 {
     int buttonChoice;
     
     // Odometer related objects
-    Odometer odometer = new Odometer(leftMotor, rightMotor, WHEEL_BASE, WHEEL_RAD);
+    final Odometer odometer = new Odometer(leftMotor, rightMotor, WHEEL_BASE, WHEEL_RAD);
     OdometerDisplay odometryDisplay = new OdometerDisplay(lcd);
-    //Navigation navigator = new Navigation(odometer);
-    //Avoidance avoid = new Avoid(usSensor, odometer, navigator);
+    UltrasonicPoller usPoller = null;
         
     do {
       // clear the display
@@ -64,31 +63,33 @@ public class Lab3 {
       lcd.drawString("       | ance ", 0, 4);
 
       buttonChoice = Button.waitForAnyPress(); // Record choice (left or right press)
-    } while (buttonChoice != Button.ID_LEFT && buttonChoice != Button.ID_RIGHT);
+    } 
+    while (buttonChoice != Button.ID_LEFT && buttonChoice != Button.ID_RIGHT);
+
+    		Thread odoThread = new Thread(odometer);
+    		odoThread.start();
+    		Thread odoDisplayThread = new Thread(odometryDisplay);
+    		odoDisplayThread.start();
 
     if (buttonChoice == Button.ID_LEFT) {
-    	
-//    		Thread odoThread = new Thread(odometer);
-//	    odoThread.start();
-//	    Thread odoDisplayThread = new Thread(odometryDisplay);
-//	    odoDisplayThread.start();
-      
+    		
+    		//Navigation with no obstacles
+    	  (new Thread() {
+    	      private Object TRACK;
 
-      // Display changes in position as wheels are (manually) moved
-      
-//      Thread odoThread = new Thread(odometer);
-//      odoThread.start();
-//      Thread odoDisplayThread = new Thread(odometryDisplay);
-//      odoDisplayThread.start();
+			public void run() {
+    	        Driver.start(odometer, leftMotor, rightMotor, WHEEL_RAD, WHEEL_BASE, false);
+    	      }
+    	    }).start();
 
     } else {
-//    		(new Thread() {
-//  	     public void run() {
-//  	        navigator.travelTo();
-//  	     }
-//  	    }).start();
-//    		usPoller = new UltrasonicPoller(usDistance, usData);
-//    		usPoller.start();
+    		(new Thread() {
+    			public void run() {
+    				Driver.start(odometer, leftMotor, rightMotor, WHEEL_RAD, WHEEL_BASE, true);
+    			}
+  	    }).start();
+    		usPoller = new UltrasonicPoller(usDistance, usData);
+    		usPoller.start();
 
 
     }
