@@ -1,14 +1,14 @@
-package main;
+package ca.mcgill.ecse211.lab3;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+import ca.mcgill.ecse211.odometer.Odometer;
+import ca.mcgill.ecse211.ultrasonic.UltrasonicPoller;
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.TextLCD;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
-import odometer.Odometer;
-import ultrasonic.UltrasonicPoller;
 
 public class Navigation extends Thread{
 
@@ -16,20 +16,15 @@ public class Navigation extends Thread{
 	private EV3LargeRegulatedMotor rightMotor;
 	private static final int FORWARD_SPEED = 250;
 	private static final int ROTATE_SPEED = 150;
-
-
 	private final double WHEEL_RAD = 2.2;
 	private final double WHEEL_BASE = 10.0;
 	private final double TILE_SIZE;
 
-	
-
 	private Odometer odometer;
 	private double x, y, theta;
-
-	private ArrayList<double[]> _coordsList;
-
 	private boolean isNavigating;
+	
+	private ArrayList<double[]> _coordsList;
 
 	public Navigation(Odometer odo, EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, double tileSize) {
 
@@ -43,7 +38,7 @@ public class Navigation extends Thread{
 	}
 
 	/**
-	 * Has the robot move to a given position
+	 * Adds the navigation points to the coordList, setting up the thread
 	 * 
 	 * @param navX coordinate of position
 	 * @param navY coordinate of position
@@ -52,6 +47,7 @@ public class Navigation extends Thread{
 		this._coordsList.add(new double[] {navX*TILE_SIZE, navY*TILE_SIZE});
 	}
 
+	//The run method runs through the _coordsList and travels through the points
 	public void run() {
 		while (!this._coordsList.isEmpty()) {
 			double[] coords = this._coordsList.remove(0);
@@ -61,20 +57,17 @@ public class Navigation extends Thread{
 
 	boolean _travelTo(double navX, double navY) {
 
-
 		UltrasonicPoller usPoller = null;
 		if (UltrasonicPoller.getInstance() != null) {
 			usPoller = UltrasonicPoller.getInstance();
 		}
 
 		// get current coordinates
-
-		//need to convert theta from degrees to radians
 		theta = odometer.getXYT()[2];
 		x = odometer.getXYT()[0];
 		y = odometer.getXYT()[1];	
 
-		// find angle to turn to
+
 		double deltaX = navX - x;
 		double deltaY = navY - y;
 
@@ -82,15 +75,15 @@ public class Navigation extends Thread{
 		double absDeltaX = Math.abs(deltaX);
 		double absDeltaY = Math.abs(deltaY);
 
+		//need to convert theta from degrees to radians
 		double deltaTheta = Math.atan2(deltaX, deltaY) / Math.PI * 180;
 
 		// turn to the correct direction
-
 		this._turnTo(theta, deltaTheta);
 		Sound.beep();
+		
 		// move until destination is reached
 		// while loop is used in case of collision override
-
 		leftMotor.setSpeed(FORWARD_SPEED);
 		rightMotor.setSpeed(FORWARD_SPEED);
 		leftMotor.forward();
@@ -105,13 +98,15 @@ public class Navigation extends Thread{
 			newX = xyt[0];
 			newY = xyt[1];	
 
+			//If the difference between the current x/y and the x/y we started from is similar to the deltaX/deltaY, 
+			//Stop the motors because the point has been reached
 			if (Math.pow(newX - x, 2) + Math.pow(newY - y, 2) > Math.pow(absDeltaX, 2) + Math.pow(absDeltaY, 2)) {
 				break;
 			}
 
-			// thread override
+			// This is only relevant if the ultrasonic poller thread is being used
 			if (usPoller != null) {
-				if (usPoller.isInitializing) {
+				if (usPoller.isInitializing) { 	//isInitializing is true when the distance is too close
 					leftMotor.stop(true);
 					rightMotor.stop(false);
 					usPoller.init(navX, navY); //hopefully blocking
@@ -159,7 +154,7 @@ public class Navigation extends Thread{
 	void _turnTo(double currTheta, double destTheta) {
 		// get theta difference
 		double deltaTheta = destTheta - currTheta;
-		// normalize theta
+		// normalize theta (get minimum value)
 		deltaTheta = normalizeAngle(deltaTheta);
 
 		leftMotor.setSpeed(ROTATE_SPEED);
@@ -169,6 +164,9 @@ public class Navigation extends Thread{
 		rightMotor.rotate(-convertAngle(WHEEL_RAD, WHEEL_BASE, deltaTheta), false);
 	}
 
+	//Getting the minimum angle to turn:
+	//It is easier to turn +90 than -270
+	//Also, it is easier to turn -90 than +270
 	double normalizeAngle(double theta) {
 		if (theta <= -180) {
 			theta += 360;

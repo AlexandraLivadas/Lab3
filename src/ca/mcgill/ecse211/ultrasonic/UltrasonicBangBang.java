@@ -1,8 +1,8 @@
-package ultrasonic;
+package ca.mcgill.ecse211.ultrasonic;
 
+import ca.mcgill.ecse211.odometer.Odometer;
+import ca.mcgill.ecse211.odometer.OdometerExceptions;
 import lejos.hardware.motor.*;
-import odometer.Odometer;
-import odometer.OdometerExceptions;
 
 public class UltrasonicBangBang {
 
@@ -59,12 +59,10 @@ public class UltrasonicBangBang {
 
 				double[] currVector = new double [] {xyt[0] - this.startCoords[0], xyt[1] - this.startCoords[1]};
 
-
-				// easier way
-				//			double ratio = currVector[0]/this.startEndVector[0];
-				//			double ratio2 = currVector[1]/this.startEndVector[1];
-
-				// dot product way
+				// Dot product: determines when to stop performing the bang-bang corrections. 
+				// When the line between the initial point and destination point is reached by the robot,
+				// This means that it has reached the other side of the block. Bang-bang is stopped and 
+				// Navigation continues
 				float dotProduct = (float) (currVector[0]*this.startEndVector[0] + currVector[1]*this.startEndVector[1]);
 				float currMagnitude = (float) Math.pow(Math.pow(currVector[0], 2) + Math.pow(currVector[1], 2), 1/2.0);
 				float startEndMagnitude = (float) Math.pow(Math.pow(this.startEndVector[0], 2) + Math.pow(this.startEndVector[1], 2), 1/2.0);
@@ -89,11 +87,7 @@ public class UltrasonicBangBang {
 		}
 
 
-		// rudimentary filter - toss out invalid samples corresponding to null
-		// signal.
-		// (n.b. this was not included in the Bang-bang controller, but easily
-		// could have).
-		//
+		// rudimentary filter - toss out invalid samples corresponding to null signal.
 		if (distance >= 255 && filterControl < FILTER_OUT) {
 			// bad value, do not set the distance var, however do increment the
 			// filter value
@@ -109,7 +103,6 @@ public class UltrasonicBangBang {
 			filterControl = 0;
 			this.distance = distance;
 		}
-		// TODO: process a movement based on the us distance passed in (BANG-BANG style)
 
 		int error = this.distance - bandCenter;
 

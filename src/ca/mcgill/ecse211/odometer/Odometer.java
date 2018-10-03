@@ -1,4 +1,4 @@
-package odometer;
+package ca.mcgill.ecse211.odometer;
 /**
  * This class is meant as a skeleton for the odometer class to be used.
  * 
@@ -141,9 +141,6 @@ public class Odometer extends OdometerData implements Runnable {
     while (true) {
       updateStart = System.currentTimeMillis();
 
-
-
-      // TODO Calculate new robot position based on tachometer counts
       double[] xyt = calcXYT();
       
       // TODO Update odometer values with new calculated values

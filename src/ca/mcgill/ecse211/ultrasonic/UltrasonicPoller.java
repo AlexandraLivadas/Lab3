@@ -1,13 +1,13 @@
-package ultrasonic;
+package ca.mcgill.ecse211.ultrasonic;
 
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import ca.mcgill.ecse211.lab3.Lab3;
 import lejos.hardware.Sound;
 import lejos.robotics.SampleProvider;
-import main.Lab3;
 
 /**
  * Control of the wall follower is applied periodically by the UltrasonicPoller thread. The while
@@ -67,7 +67,7 @@ public class UltrasonicPoller extends Thread {
 	 * 
 	 * @see java.lang.Thread#run()
 	 */
-	public void run() {
+	public void run() { 
 		int distance;
 		while (true) {
 			us.fetchSample(usData, 0); // acquire data
@@ -85,7 +85,7 @@ public class UltrasonicPoller extends Thread {
 		try {
 			cont.initBangBang(endX, endY);
 			isInitializing = false;
-			isAvoiding = true;
+			isAvoiding = true;	//Once the bang-bang control is initialized, it has begun avoiding
 		} finally {
 			synchronized(doneInit) {
 				doneInit.notifyAll();

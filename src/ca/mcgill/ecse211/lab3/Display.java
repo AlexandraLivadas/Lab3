@@ -1,9 +1,10 @@
-package main;
+package ca.mcgill.ecse211.lab3;
 import java.text.DecimalFormat;
+
+import ca.mcgill.ecse211.odometer.Odometer;
+import ca.mcgill.ecse211.odometer.OdometerExceptions;
+import ca.mcgill.ecse211.ultrasonic.UltrasonicPoller;
 import lejos.hardware.lcd.TextLCD;
-import odometer.Odometer;
-import odometer.OdometerExceptions;
-import ultrasonic.UltrasonicPoller;
 
 /**
  * This class is used to display the content of the odometer variables (x, y, Theta)
