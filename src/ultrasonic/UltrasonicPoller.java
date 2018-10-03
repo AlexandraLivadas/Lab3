@@ -81,19 +81,23 @@ public class UltrasonicPoller extends Thread {
 		}
 	}
 	
-	public void init() {
+	public void init(double endX, double endY) {
 		try {
-			cont.initBangBang();
+			cont.initBangBang(endX, endY);
 			isInitializing = false;
 			isAvoiding = true;
 		} finally {
 			synchronized(doneInit) {
-				doneInit.notify();
+				doneInit.notifyAll();
 			}
 			
 		}
 	}
 
+	public UltrasonicBangBang getController() {
+		return this.cont;
+	}
+	
 	private void processUSData(int distance) {
 		if (this.isAvoiding) {
 			cont.processUSData(distance);

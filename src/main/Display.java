@@ -25,7 +25,6 @@ public class Display extends Thread implements Runnable {
    */
   public Display(TextLCD lcd) throws OdometerExceptions {
     odo = Odometer.getOdometer();
-    usPoller = UltrasonicPoller.getInstance();
     this.lcd = lcd;
   }
 
@@ -42,7 +41,7 @@ public class Display extends Thread implements Runnable {
   }
 
   public void run() {
-    
+	usPoller = UltrasonicPoller.getInstance();
     lcd.clear();
     
     long updateStart, updateEnd;
@@ -66,7 +65,7 @@ public class Display extends Thread implements Runnable {
       
       if (usPoller != null) {
           lcd.drawString("Distance: " + numberFormat.format(usPoller.distance), 0, 3);
-    	  
+          lcd.drawString("DMR: " + numberFormat.format(usPoller.getController().dotMagnitudeRatio), 0, 4);
       }
       
 //      // DEBUG

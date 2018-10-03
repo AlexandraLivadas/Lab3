@@ -98,11 +98,12 @@ public class Navigation extends Thread{
 
 		while(true) {
 			double newTheta, newX, newY;
-
+			
+			double xyt[] = odometer.getXYT();
 			//need to convert theta from degrees to radians
-			newTheta = odometer.getXYT()[2];
-			newX = odometer.getXYT()[0];
-			newY = odometer.getXYT()[1];	
+			newTheta = xyt[2];
+			newX = xyt[0];
+			newY = xyt[1];	
 
 			if (Math.pow(newX - x, 2) + Math.pow(newY - y, 2) > Math.pow(absDeltaX, 2) + Math.pow(absDeltaY, 2)) {
 				break;
@@ -113,17 +114,21 @@ public class Navigation extends Thread{
 				if (usPoller.isInitializing) {
 					leftMotor.stop(true);
 					rightMotor.stop(false);
-					usPoller.init(); //hopefully blocking
+					usPoller.init(navX, navY); //hopefully blocking
+					
 					try {
 						synchronized(usPoller.doneAvoiding) {
 							while(usPoller.isAvoiding) {
 								usPoller.doneAvoiding.wait();
 							}
+							Sound.beepSequenceUp();
 						}
 					} catch(InterruptedException e) {
 						e.printStackTrace();
 					}
+					
 					this._coordsList.add(0, new double[] {navX, navY});
+					
 					return false;
 				}
 			}

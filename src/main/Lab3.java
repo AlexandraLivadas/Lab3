@@ -33,7 +33,7 @@ public class Lab3 {
 	
 	//
 	
-	public static final double MIN_DISTANCE = 21.0;
+	public static final double MIN_DISTANCE = 14.0;
 	
 
 	//	public static final SensorModes lsSensor = new EV3ColorSensor(lsPort);
@@ -109,44 +109,11 @@ public class Lab3 {
 			ultrasonicThread.start();
 			
 			navigator.travelTo(0, 2);
-			navigator.travelTo(1, 1);
 			navigator.travelTo(2, 0);
-			navigator.travelTo(2, 1);
-			navigator.travelTo(1, 0);
+			navigator.travelTo(0, 0);
 
 			Thread navigatorThread = new Thread(navigator);
 			navigatorThread.start();
-			
-
-			//start the avoid thread
-			//avoid.start();
-			//start the odometer thread
-//			Thread odoThread = new Thread(odometer);
-//			odoThread.start();
-//			//start the odometer display thread
-//			Thread odoDisplayThread = new Thread(odometryDisplay);
-//			odoDisplayThread.start();
-
-			//      // Start odometer and display threads
-			//      Thread odoThread = new Thread(odometer);
-			//      odoThread.start();
-			//      Thread odoDisplayThread = new Thread(odometryDisplay);
-			//      odoDisplayThread.start();
-			//      
-			//      // spawn a new Thread to avoid SquareDriver.drive() from blocking
-			//      (new Thread() {
-			//        public void run() {
-			//          SquareDriver.drive(leftMotor, rightMotor, WHEEL_RAD, WHEEL_RAD, TRACK);
-			//        }
-			//      }).start();
-
-			//      // Start correction if right button was pressed
-			//      if (buttonChoice == Button.ID_RIGHT) {
-			//        Thread odoCorrectionThread = new Thread(odometryCorrection);
-			//        odoCorrectionThread.start();
-			//        
-			//      }
-
 
 		}
 
