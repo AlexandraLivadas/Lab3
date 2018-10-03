@@ -1,7 +1,9 @@
+package main;
 import java.text.DecimalFormat;
 import lejos.hardware.lcd.TextLCD;
 import odometer.Odometer;
 import odometer.OdometerExceptions;
+import ultrasonic.UltrasonicPoller;
 
 /**
  * This class is used to display the content of the odometer variables (x, y, Theta)
@@ -9,6 +11,7 @@ import odometer.OdometerExceptions;
 public class Display extends Thread implements Runnable {
 
   private Odometer odo;
+  private UltrasonicPoller usPoller;
   private TextLCD lcd;
   private double[] position;
   private final long DISPLAY_PERIOD = 25;
@@ -22,6 +25,7 @@ public class Display extends Thread implements Runnable {
    */
   public Display(TextLCD lcd) throws OdometerExceptions {
     odo = Odometer.getOdometer();
+    usPoller = UltrasonicPoller.getInstance();
     this.lcd = lcd;
   }
 
@@ -59,6 +63,11 @@ public class Display extends Thread implements Runnable {
       lcd.drawString("Y: " + numberFormat.format(position[1]), 0, 1);
       lcd.drawString("T: " + numberFormat.format(position[2]), 0, 2);
       
+      
+      if (usPoller != null) {
+          lcd.drawString("Distance: " + numberFormat.format(usPoller.distance), 0, 3);
+    	  
+      }
       
 //      // DEBUG
 //      int[] tachos = odo.getTachoCount();

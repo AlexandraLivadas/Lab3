@@ -1,3 +1,4 @@
+package main;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -7,6 +8,7 @@ import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.TextLCD;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import odometer.Odometer;
+import ultrasonic.UltrasonicPoller;
 
 public class Navigation extends Thread{
 
@@ -20,6 +22,7 @@ public class Navigation extends Thread{
 	private final double WHEEL_BASE = 10.0;
 	private final double TILE_SIZE;
 
+	
 
 	private Odometer odometer;
 	private double x, y, theta;
@@ -36,6 +39,7 @@ public class Navigation extends Thread{
 		this.TILE_SIZE = tileSize;
 		this.isNavigating = false;
 		this._coordsList = new ArrayList<double[]>();
+
 	}
 
 	/**
@@ -55,19 +59,21 @@ public class Navigation extends Thread{
 		}
 	}
 
-	//	public void run() {
-	//
-	//		
-	//	}
-
 	boolean _travelTo(double navX, double navY) {
-		// get current coordinates
-		synchronized(odometer.lock) {
-			//need to convert theta from degrees to radians
-			theta = odometer.getXYT()[2];
-			x = odometer.getXYT()[0];
-			y = odometer.getXYT()[1];	
+
+
+		UltrasonicPoller usPoller = null;
+		if (UltrasonicPoller.getInstance() != null) {
+			usPoller = UltrasonicPoller.getInstance();
 		}
+
+		// get current coordinates
+
+		//need to convert theta from degrees to radians
+		theta = odometer.getXYT()[2];
+		x = odometer.getXYT()[0];
+		y = odometer.getXYT()[1];	
+
 		// find angle to turn to
 		double deltaX = navX - x;
 		double deltaY = navY - y;
@@ -92,19 +98,43 @@ public class Navigation extends Thread{
 
 		while(true) {
 			double newTheta, newX, newY;
-			synchronized(odometer.lock) {
-				//need to convert theta from degrees to radians
-				newTheta = odometer.getXYT()[2];
-				newX = odometer.getXYT()[0];
-				newY = odometer.getXYT()[1];	
-			}
-			
-			
-			if (Math.abs(newX - x) > absDeltaX && Math.abs(newY - y) > absDeltaY) {
+
+			//need to convert theta from degrees to radians
+			newTheta = odometer.getXYT()[2];
+			newX = odometer.getXYT()[0];
+			newY = odometer.getXYT()[1];	
+
+			if (Math.pow(newX - x, 2) + Math.pow(newY - y, 2) > Math.pow(absDeltaX, 2) + Math.pow(absDeltaY, 2)) {
 				break;
 			}
 
-			// no need to sleep since it synchronizes with the odometer lock
+			// thread override
+			if (usPoller != null) {
+				if (usPoller.isInitializing) {
+					leftMotor.stop(true);
+					rightMotor.stop(false);
+					usPoller.init(); //hopefully blocking
+					try {
+						synchronized(usPoller.doneAvoiding) {
+							while(usPoller.isAvoiding) {
+								usPoller.doneAvoiding.wait();
+							}
+						}
+					} catch(InterruptedException e) {
+						e.printStackTrace();
+					}
+					this._coordsList.add(0, new double[] {navX, navY});
+					return false;
+				}
+			}
+
+			try {
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 		}
 		leftMotor.stop(true);
 		rightMotor.stop(false);

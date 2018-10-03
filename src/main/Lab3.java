@@ -1,3 +1,4 @@
+package main;
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.LCD;
@@ -10,6 +11,8 @@ import lejos.hardware.sensor.SensorModes;
 import lejos.robotics.SampleProvider;
 import odometer.Odometer;
 import odometer.OdometerExceptions;
+import ultrasonic.UltrasonicBangBang;
+import ultrasonic.UltrasonicPoller;
 
 public class Lab3 {
 
@@ -18,13 +21,20 @@ public class Lab3 {
 			new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
 	private static final EV3LargeRegulatedMotor rightMotor =
 			new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
-	private static final Port lsPort = LocalEV3.get().getPort("S4"); //ultrasonic sensor port
-	private static final Port usPort = LocalEV3.get().getPort("S1"); //light sensor port
-
+	private static final Port usPort = LocalEV3.get().getPort("S4"); //ultrasonic sensor port
+	private static final EV3LargeRegulatedMotor usMotor =
+			new EV3LargeRegulatedMotor(LocalEV3.get().getPort("B"));
+	
+	
 	private static final TextLCD lcd = LocalEV3.get().getTextLCD();
 	public static final double WHEEL_RAD = 2.2;
 	public static final double WHEEL_BASE = 10.0;
 	public static final double TILE_SIZE = 30.48; 
+	
+	//
+	
+	public static final double MIN_DISTANCE = 21.0;
+	
 
 	//	public static final SensorModes lsSensor = new EV3ColorSensor(lsPort);
 	//	public static final SampleProvider lsColor = lsSensor.getMode("Red");
@@ -67,9 +77,9 @@ public class Lab3 {
 			Thread odoDisplayThread = new Thread(odometryDisplay);
 			odoDisplayThread.start();
 
-			navigator.travelTo(0, 2);
+			navigator.travelTo(0, 1);
 			navigator.travelTo(1, 1);
-			navigator.travelTo(2, 2);
+			navigator.travelTo(2, 0);
 			navigator.travelTo(2, 1);
 			navigator.travelTo(1, 0);
 
@@ -85,15 +95,37 @@ public class Lab3 {
 
 		} else {
 			LCD.clear();
+			
+			UltrasonicBangBang usCont = new UltrasonicBangBang(leftMotor, rightMotor, usMotor, WHEEL_RAD, WHEEL_BASE);
+			UltrasonicPoller usPoller = UltrasonicPoller.getInstance(usSensor, usData, usCont, MIN_DISTANCE);
+			
+			Thread odoThread = new Thread(odometer);
+			odoThread.start();
+
+			Thread odoDisplayThread = new Thread(odometryDisplay);
+			odoDisplayThread.start();
+			
+			Thread ultrasonicThread = new Thread(usPoller);
+			ultrasonicThread.start();
+			
+			navigator.travelTo(0, 2);
+			navigator.travelTo(1, 1);
+			navigator.travelTo(2, 0);
+			navigator.travelTo(2, 1);
+			navigator.travelTo(1, 0);
+
+			Thread navigatorThread = new Thread(navigator);
+			navigatorThread.start();
+			
 
 			//start the avoid thread
 			//avoid.start();
 			//start the odometer thread
-			Thread odoThread = new Thread(odometer);
-			odoThread.start();
-			//start the odometer display thread
-			Thread odoDisplayThread = new Thread(odometryDisplay);
-			odoDisplayThread.start();
+//			Thread odoThread = new Thread(odometer);
+//			odoThread.start();
+//			//start the odometer display thread
+//			Thread odoDisplayThread = new Thread(odometryDisplay);
+//			odoDisplayThread.start();
 
 			//      // Start odometer and display threads
 			//      Thread odoThread = new Thread(odometer);
